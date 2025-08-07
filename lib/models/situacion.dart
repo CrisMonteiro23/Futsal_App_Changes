@@ -6,6 +6,7 @@ class Situacion {
   String tipoLlegada;
   List<String> jugadoresEnCanchaIds;
   List<String> jugadoresEnCanchaNombres;
+  String jugadorClaveId; // <-- nuevo campo
 
   Situacion({
     required this.id,
@@ -14,6 +15,7 @@ class Situacion {
     required this.tipoLlegada,
     required this.jugadoresEnCanchaIds,
     required this.jugadoresEnCanchaNombres,
+    required this.jugadorClaveId, // <-- nuevo parámetro en constructor
   });
 
   Map<String, dynamic> toJson() {
@@ -24,6 +26,7 @@ class Situacion {
       'tipoLlegada': tipoLlegada,
       'jugadoresEnCanchaIds': jugadoresEnCanchaIds,
       'jugadoresEnCanchaNombres': jugadoresEnCanchaNombres,
+      'jugadorClaveId': jugadorClaveId, // <-- agregar en JSON también
     };
   }
 
@@ -35,6 +38,7 @@ class Situacion {
       tipoLlegada: json['tipoLlegada'],
       jugadoresEnCanchaIds: List<String>.from(json['jugadoresEnCanchaIds']),
       jugadoresEnCanchaNombres: List<String>.from(json['jugadoresEnCanchaNombres']),
+      jugadorClaveId: json['jugadorClaveId'], // <-- también aquí
     );
   }
 }
