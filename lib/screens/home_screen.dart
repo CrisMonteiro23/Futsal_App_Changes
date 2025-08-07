@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mi_app_futsal/data/app_data.dart';
 import 'package:mi_app_futsal/models/jugador.dart';
-import 'package:mi_app_futsal/screens/estadisticas_screen.dart'; // Para navegar a estadísticas
+import 'package:mi_app_futsal/screens/estadisticas_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,19 +13,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 enum AppStep {
-  selectPlayers, // Paso 1: Seleccionar jugadores en cancha
-  selectType, // Paso 2: Seleccionar si es a favor o en contra
-  selectSituation, // Paso 3: Seleccionar el tipo de situación
+  selectPlayers,
+  selectType,
+  selectSituation,
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Lista de jugadores seleccionados para estar en cancha
   final List<Jugador> _selectedPlayers = [];
-  AppStep _currentStep = AppStep.selectPlayers; // Paso actual de la aplicación
-  bool? _esAFavor; // True si es a favor, false si es en contra, null si no seleccionado
-  String? _selectedTipoLlegada; // El tipo de llegada seleccionado
+  AppStep _currentStep = AppStep.selectPlayers;
+  bool? _esAFavor;
+  String? _selectedTipoLlegada;
 
-  // Opciones de tipos de llegada
   final List<String> _tiposLlegada = [
     'Ataque Posicional',
     'INC Portero',
@@ -37,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'Dobles-Penales',
   ];
 
-  // Controlador para añadir nuevos jugadores
   final TextEditingController _newPlayerController = TextEditingController();
 
   @override
@@ -46,7 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Función para manejar la selección/deselección de jugadores
   void _togglePlayerSelection(Jugador jugador) {
     setState(() {
       if (_selectedPlayers.contains(jugador)) {
@@ -63,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Función para reiniciar el estado del formulario
   void _resetForm() {
     setState(() {
       _selectedPlayers.clear();
@@ -73,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Función para añadir una situación y reiniciar
   void _addSituationAndReset() {
     if (_esAFavor == null || _selectedTipoLlegada == null || _selectedPlayers.length != 5) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,12 +86,11 @@ class _HomeScreenState extends State<HomeScreen> {
       const SnackBar(content: Text('Situación registrada con éxito.')),
     );
 
-    _resetForm(); // Reinicia el formulario inmediatamente
+    _resetForm();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Consumer para acceder a la lista de jugadores disponibles
     return Scaffold(
       appBar: AppBar(
         title: const Text('Analizador de Futsal'),
@@ -121,59 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                // Sección para añadir nuevos jugadores
-                Card(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Añadir Nuevo Jugador:',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _newPlayerController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Nombre del Jugador',
-                                  border: OutlineInputBorder(),
-                                ),
-                                onSubmitted: (value) {
-                                  if (value.isNotEmpty) {
-                                    appData.addJugador(value);
-                                    _newPlayerController.clear();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Jugador "$value" añadido.')),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (_newPlayerController.text.isNotEmpty) {
-                                  appData.addJugador(_newPlayerController.text);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Jugador "${_newPlayerController.text}" añadido.')),
-                                  );
-                                  _newPlayerController.clear();
-                                }
-                              },
-                              child: const Text('Añadir'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Título de la sección actual
+                _buildAddPlayerCard(appData),
                 Text(
                   _currentStep == AppStep.selectPlayers
                       ? 'Paso 1: Selecciona los 5 jugadores en cancha (${_selectedPlayers.length}/5)'
@@ -184,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-
-                // Contenido basado en el paso actual
                 Expanded(
                   child: _currentStep == AppStep.selectPlayers
                       ? _buildPlayerSelectionGrid(appData.jugadores)
@@ -193,10 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? _buildTypeSelectionButtons()
                           : _buildSituationTypeSelection(),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Botones de navegación/acción
                 _buildActionButtons(),
               ],
             ),
@@ -206,14 +142,65 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget para la selección de jugadores
+  Widget _buildAddPlayerCard(AppData appData) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Añadir Nuevo Jugador:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _newPlayerController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del Jugador',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (value) {
+                      if (value.isNotEmpty) {
+                        appData.addJugador(value);
+                        _newPlayerController.clear();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Jugador "$value" añadido.')),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_newPlayerController.text.isNotEmpty) {
+                      appData.addJugador(_newPlayerController.text);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Jugador "${_newPlayerController.text}" añadido.')),
+                      );
+                      _newPlayerController.clear();
+                    }
+                  },
+                  child: const Text('Añadir'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPlayerSelectionGrid(List<Jugador> jugadores) {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4, // Aumentado a 4 columnas para hacer los iconos más chicos
-        crossAxisSpacing: 8, // Espacio reducido
-        mainAxisSpacing: 8, // Espacio reducido
-        childAspectRatio: 2.0, // Reducido para hacer las tarjetas más compactas
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 2.0,
       ),
       itemCount: jugadores.length,
       itemBuilder: (context, index) {
@@ -225,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: isSelected ? Colors.blueAccent.shade100 : Colors.grey.shade200,
             elevation: isSelected ? 8 : 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8), // Bordes ligeramente más pequeños
+              borderRadius: BorderRadius.circular(8),
               side: BorderSide(
                 color: isSelected ? Colors.blueAccent : Colors.transparent,
                 width: 2,
@@ -236,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 jugador.nombre,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14, // Tamaño de fuente reducido
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: isSelected ? Colors.blueAccent.shade700 : Colors.black87,
                 ),
@@ -248,7 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget para la selección de tipo (favor/contra)
   Widget _buildTypeSelectionButtons() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -257,28 +243,28 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             setState(() {
               _esAFavor = true;
-              _currentStep = AppStep.selectSituation; // Avanza al siguiente paso
+              _currentStep = AppStep.selectSituation;
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green, // Botón verde para "a favor"
-            minimumSize: const Size(200, 50), // Tamaño mínimo del botón ligeramente reducido
-            textStyle: const TextStyle(fontSize: 18), // Tamaño de fuente reducido
+            backgroundColor: Colors.green,
+            minimumSize: const Size(200, 50),
+            textStyle: const TextStyle(fontSize: 18),
           ),
           child: const Text('Llegada a favor'),
         ),
-        const SizedBox(height: 20), // Espacio reducido
+        const SizedBox(height: 20),
         ElevatedButton(
           onPressed: () {
             setState(() {
               _esAFavor = false;
-              _currentStep = AppStep.selectSituation; // Avanza al siguiente paso
+              _currentStep = AppStep.selectSituation;
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red, // Botón rojo para "en contra"
-            minimumSize: const Size(200, 50), // Tamaño mínimo del botón ligeramente reducido
-            textStyle: const TextStyle(fontSize: 18), // Tamaño de fuente reducido
+            backgroundColor: Colors.red,
+            minimumSize: const Size(200, 50),
+            textStyle: const TextStyle(fontSize: 18),
           ),
           child: const Text('Llegada en contra'),
         ),
@@ -286,7 +272,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget para la selección del tipo de situación
   Widget _buildSituationTypeSelection() {
     return ListView.builder(
       itemCount: _tiposLlegada.length,
@@ -294,15 +279,15 @@ class _HomeScreenState extends State<HomeScreen> {
         final tipo = _tiposLlegada[index];
         final isSelected = _selectedTipoLlegada == tipo;
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4.0), // Margen vertical reducido
+          margin: const EdgeInsets.symmetric(vertical: 4.0),
           color: isSelected ? Colors.blue.shade100 : Colors.white,
           elevation: isSelected ? 6 : 2,
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Padding reducido
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             title: Text(
               tipo,
               style: TextStyle(
-                fontSize: 16, // Tamaño de fuente reducido
+                fontSize: 16,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected ? Colors.blue.shade800 : Colors.black,
               ),
@@ -319,7 +304,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget para los botones de acción (Siguiente / Registrar)
   Widget _buildActionButtons() {
     if (_currentStep == AppStep.selectPlayers) {
       return ElevatedButton(
@@ -329,32 +313,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   _currentStep = AppStep.selectType;
                 });
               }
-            : null, // Deshabilitado si no hay 5 jugadores
+            : null,
         child: const Text('Siguiente'),
       );
     } else if (_currentStep == AppStep.selectType) {
       return ElevatedButton(
-        onPressed: () {
-          // Si el usuario vuelve atrás desde este paso, puede ir al paso anterior
-          _resetForm(); // Forzamos un reset completo si se vuelve desde aquí
-        },
+        onPressed: _resetForm,
         child: const Text('Volver a Selección de Jugadores'),
       );
-    } else { // AppStep.selectSituation
+    } else {
       return Column(
         children: [
           ElevatedButton(
-            onPressed: _selectedTipoLlegada != null
-                ? _addSituationAndReset // Llama a la función que guarda y resetea
-                : null, // Deshabilitado si no se ha seleccionado tipo
+            onPressed: _selectedTipoLlegada != null ? _addSituationAndReset : null,
             child: const Text('Registrar Situación'),
           ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: () {
               setState(() {
-                _currentStep = AppStep.selectType; // Volver al paso anterior
-                _selectedTipoLlegada = null; // Limpiar selección de tipo de llegada
+                _currentStep = AppStep.selectType;
+                _selectedTipoLlegada = null;
               });
             },
             child: const Text('Volver a Tipo de Llegada'),
