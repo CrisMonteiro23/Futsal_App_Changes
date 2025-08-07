@@ -41,7 +41,14 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addSituacion(bool esAFavor, String tipoLlegada, List<Jugador> jugadoresEnCancha) {
+  // ✅ MODIFICADO: addSituacion ahora permite opcionalmente registrar pérdida/recuperación
+  void addSituacion(
+    bool esAFavor,
+    String tipoLlegada,
+    List<Jugador> jugadoresEnCancha, {
+    String? jugadorClaveId,
+    String? tipoAccionClave,
+  }) {
     final situacion = Situacion(
       id: _uuid.v4(),
       timestamp: DateTime.now(),
@@ -49,6 +56,8 @@ class AppData extends ChangeNotifier {
       tipoLlegada: tipoLlegada,
       jugadoresEnCanchaIds: jugadoresEnCancha.map((j) => j.id).toList(),
       jugadoresEnCanchaNombres: jugadoresEnCancha.map((j) => j.nombre).toList(),
+      jugadorClaveId: jugadorClaveId,
+      tipoAccionClave: tipoAccionClave,
     );
     _situacionesRegistradas.add(situacion);
     notifyListeners();
