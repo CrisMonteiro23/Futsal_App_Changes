@@ -120,6 +120,8 @@ class TablaJugadoresWidget extends StatelessWidget {
             DataColumn(label: Text('En Contra', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('Balance', style: TextStyle(fontWeight: FontWeight.bold))),
             DataColumn(label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Jugador Clave', style: TextStyle(fontWeight: FontWeight.bold))),
+            DataColumn(label: Text('Acción Clave', style: TextStyle(fontWeight: FontWeight.bold))),
           ],
           rows: [
             ...jugadoresConDatos.map((jugador) {
@@ -128,6 +130,9 @@ class TablaJugadoresWidget extends StatelessWidget {
               final contra = playerStat['contra']!;
               final total = favor + contra;
               final balance = favor - contra;
+
+              final jugadorClave = playerStat['jugadorClave'] ?? 0;
+              final accionClave = playerStat['accionClave'] ?? 0;
 
               return DataRow(cells: [
                 DataCell(Text(jugador.nombre)),
@@ -141,6 +146,8 @@ class TablaJugadoresWidget extends StatelessWidget {
                   ),
                 )),
                 DataCell(Text(total.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(Text(jugadorClave.toString())),
+                DataCell(Text(accionClave.toString())),
               ]);
             }).toList(),
             DataRow(
@@ -151,6 +158,8 @@ class TablaJugadoresWidget extends StatelessWidget {
                 DataCell(Text(totalContra.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red))),
                 const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
                 DataCell(Text(totalGeneral.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue))),
+                const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
               ],
             ),
           ],
