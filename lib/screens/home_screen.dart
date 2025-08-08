@@ -16,6 +16,7 @@ enum AppStep {
   selectPlayers,
   selectType,
   selectSituation,
+  selectKeyAction,
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -23,6 +24,8 @@ class _HomeScreenState extends State<HomeScreen> {
   AppStep _currentStep = AppStep.selectPlayers;
   bool? _esAFavor;
   String? _selectedTipoLlegada;
+  Jugador? _jugadorClave;
+  String? _tipoAccionClave;
 
   final List<String> _tiposLlegada = [
     'Ataque Posicional',
@@ -33,6 +36,11 @@ class _HomeScreenState extends State<HomeScreen> {
     '5x4',
     '4x5',
     'Dobles-Penales',
+  ];
+
+  final List<String> _accionesClave = [
+    'Pérdida',
+    'Recuperación',
   ];
 
   final TextEditingController _newPlayerController = TextEditingController();
@@ -65,6 +73,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentStep = AppStep.selectPlayers;
       _esAFavor = null;
       _selectedTipoLlegada = null;
+      _jugadorClave = null;
+      _tipoAccionClave = null;
     });
   }
 
@@ -80,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _esAFavor!,
       _selectedTipoLlegada!,
       _selectedPlayers,
+      jugadorClaveId: _jugadorClave?.id,
+      tipoAccionClave: _tipoAccionClave,
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -120,7 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'Paso 1: Selecciona los 5 jugadores en cancha (${_selectedPlayers.length}/5)'
                       : _currentStep == AppStep.selectType
                           ? 'Paso 2: ¿Llegada a favor o en contra?'
-                          : 'Paso 3: Selecciona el tipo de llegada',
+                          : _currentStep == AppStep.selectSituation
+                              ? 'Paso 3: Selecciona el tipo de llegada'
+                              : 'Paso 4: ¿Quién fue clave y qué hizo?',
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
@@ -130,7 +144,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? _buildPlayerSelectionGrid(appData.jugadores)
                       : _currentStep == AppStep.selectType
                           ? _buildTypeSelectionButtons()
-                          : _buildSituationTypeSelection(),
+                          : _currentStep == AppStep.selectSituation
+                              ? _buildSituationTypeSelection()
+                              : _buildKeyActionSelection(),
                 ),
                 const SizedBox(height: 20),
                 _buildActionButtons(),
@@ -139,6 +155,46 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildKeyActionSelection() {
+    return Column(
+      children: [
+        DropdownButton<Jugador>(
+          hint: const Text('Selecciona jugador clave (opcional)'),
+          isExpanded: true,
+          value: _jugadorClave,
+          items: _selectedPlayers.map((jugador) {
+            return DropdownMenuItem<Jugador>(
+              value: jugador,
+              child: Text(jugador.nombre),
+            );
+          }).toList(),
+          onChanged: (Jugador? value) {
+            setState(() {
+              _jugadorClave = value;
+            });
+          },
+        ),
+        const SizedBox(height: 20),
+        DropdownButton<String>(
+          hint: const Text('Selecciona acción clave (opcional)'),
+          isExpanded: true,
+          value: _tipoAccionClave,
+          items: _accionesClave.map((accion) {
+            return DropdownMenuItem<String>(
+              value: accion,
+              child: Text(accion),
+            );
+          }).toList(),
+          onChanged: (String? value) {
+            setState(() {
+              _tipoAccionClave = value;
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -295,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               setState(() {
                 _selectedTipoLlegada = tipo;
+                _currentStep = AppStep.selectKeyAction;
               });
             },
             trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.blue) : null,
@@ -321,6 +378,16 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: _resetForm,
         child: const Text('Volver a Selección de Jugadores'),
       );
+    } else if (_currentStep == AppStep.selectSituation) {
+      return ElevatedButton(
+        onPressed: () {
+          setState(() {
+            _currentStep = AppStep.selectType;
+            _selectedTipoLlegada = null;
+          });
+        },
+        child: const Text('Volver a Tipo de Llegada'),
+      );
     } else {
       return Column(
         children: [
@@ -332,8 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                _currentStep = AppStep.selectType;
-                _selectedTipoLlegada = null;
+                _currentStep = AppStep.selectSituation;
               });
             },
             child: const Text('Volver a Tipo de Llegada'),
