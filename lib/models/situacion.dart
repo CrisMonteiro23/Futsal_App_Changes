@@ -1,4 +1,3 @@
-// lib/models/situacion.dart
 class Situacion {
   String id;
   DateTime timestamp;
@@ -6,7 +5,10 @@ class Situacion {
   String tipoLlegada;
   List<String> jugadoresEnCanchaIds;
   List<String> jugadoresEnCanchaNombres;
-  String jugadorClaveId; // <-- nuevo campo
+
+  // ➕ Nuevos campos opcionales
+  String? jugadorClaveId;       // ID del jugador que perdió o recuperó la pelota
+  String? tipoAccionClave;      // "Pérdida" o "Recuperación"
 
   Situacion({
     required this.id,
@@ -15,7 +17,8 @@ class Situacion {
     required this.tipoLlegada,
     required this.jugadoresEnCanchaIds,
     required this.jugadoresEnCanchaNombres,
-    required this.jugadorClaveId, // <-- nuevo parámetro en constructor
+    this.jugadorClaveId,
+    this.tipoAccionClave,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,7 +29,8 @@ class Situacion {
       'tipoLlegada': tipoLlegada,
       'jugadoresEnCanchaIds': jugadoresEnCanchaIds,
       'jugadoresEnCanchaNombres': jugadoresEnCanchaNombres,
-      'jugadorClaveId': jugadorClaveId, // <-- agregar en JSON también
+      'jugadorClaveId': jugadorClaveId,
+      'tipoAccionClave': tipoAccionClave,
     };
   }
 
@@ -38,7 +42,8 @@ class Situacion {
       tipoLlegada: json['tipoLlegada'],
       jugadoresEnCanchaIds: List<String>.from(json['jugadoresEnCanchaIds']),
       jugadoresEnCanchaNombres: List<String>.from(json['jugadoresEnCanchaNombres']),
-      jugadorClaveId: json['jugadorClaveId'], // <-- también aquí
+      jugadorClaveId: json['jugadorClaveId'],
+      tipoAccionClave: json['tipoAccionClave'],
     );
   }
 }
