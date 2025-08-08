@@ -63,7 +63,7 @@ class TabEstadisticasJugadores extends StatelessWidget {
 }
 
 class TablaJugadoresWidget extends StatelessWidget {
-  final Map<String, Map<String, dynamic>> stats; // ahora dinámico para incluir jugadorClave y accionClave
+  final Map<String, Map<String, dynamic>> stats; // incluye jugadorClave y accionClave
   final List<Jugador> jugadores;
 
   const TablaJugadoresWidget({super.key, required this.stats, required this.jugadores});
@@ -131,20 +131,20 @@ class TablaJugadoresWidget extends StatelessWidget {
               final total = favor + contra;
               final balance = favor - contra;
 
-              // Obtenemos jugadorClave y accionClave (IDs)
+              // IDs de jugador clave y acción clave
               final jugadorClaveId = playerStat['jugadorClave'] as String?;
               final accionClaveId = playerStat['accionClave'] as String?;
 
-              // Buscar nombre del jugador clave
-              final jugadorClaveNombre = jugadorClaveId != null
+              // Nombre jugador clave
+              final jugadorClaveNombre = jugadorClaveId != null && jugadorClaveId.isNotEmpty
                   ? jugadores.firstWhere(
                       (j) => j.id == jugadorClaveId,
                       orElse: () => Jugador(id: '', nombre: '-'))
                       .nombre
                   : '-';
 
-              // Buscar nombre de la acción clave
-              final accionClaveNombre = accionClaveId != null
+              // Nombre acción clave (usando el map del provider)
+              final accionClaveNombre = accionClaveId != null && accionClaveId.isNotEmpty
                   ? appData.getNombreAccionClave(accionClaveId) ?? '-'
                   : '-';
 
