@@ -26,6 +26,16 @@ class AppData extends ChangeNotifier {
 
   final List<Situacion> _situacionesRegistradas = [];
 
+  // Ejemplo mapa de acciones clave (ID -> nombre), modifícalo según tu origen de datos
+  final Map<String, String> _accionesClaveMap = {
+    'accion1': 'Gol',
+    'accion2': 'Asistencia',
+    'accion3': 'Recuperación',
+    'accion4': 'Pérdida',
+    'accion5': 'Tiro al arco',
+    // Añade aquí todas las acciones clave que uses con sus IDs
+  };
+
   // Getter público para acceder a la lista de jugadores
   List<Jugador> get jugadores => List.unmodifiable(_jugadoresDisponibles);
 
@@ -41,7 +51,7 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ MODIFICADO: addSituacion ahora permite opcionalmente registrar pérdida/recuperación
+  // ✅ MODIFICADO: addSituacion ahora permite opcionalmente registrar jugadorClave y tipoAccionClave
   void addSituacion(
     bool esAFavor,
     String tipoLlegada,
@@ -68,22 +78,85 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
-  Map<String, Map<String, int>> getPlayerStats() {
-    final Map<String, Map<String, int>> stats = {};
+  /// Devuelve las estadísticas por jugador incluyendo info de jugadorClave y accionClave para ese jugador
+  /// Cambia la estructura para que incluya estos datos:
+  ///
+  /// Map<jugadorId, {
+  ///   'favor': int,
+  ///   'contra': int,
+  ///   'jugadorClave': String? (jugadorClaveId más frecuente o null),
+  ///   'accionClave': String? (tipoAccionClave más frecuente o null)
+  /// }>
+  Map<String, Map<String, dynamic>> getPlayerStats() {
+    final Map<String, Map<String, dynamic>> stats = {};
 
+    // Inicializar estructura
     for (var jugador in _jugadoresDisponibles) {
-      stats[jugador.id] = {'favor': 0, 'contra': 0};
+      stats[jugador.id] = {
+        'favor': 0,
+        'contra': 0,
+        'jugadoresClaveFrecuentes': <String, int>{},
+        'accionesClaveFrecuentes': <String, int>{},
+      };
     }
 
+    // Contar
     for (var situacion in _situacionesRegistradas) {
       for (var jugadorId in situacion.jugadoresEnCanchaIds) {
-        stats.putIfAbsent(jugadorId, () => {'favor': 0, 'contra': 0});
+        final playerStat = stats.putIfAbsent(jugadorId, () {
+          return {
+            'favor': 0,
+            'contra': 0,
+            'jugadoresClaveFrecuentes': <String, int>{},
+            'accionesClaveFrecuentes': <String, int>{},
+          };
+        });
+
         if (situacion.esAFavor) {
-          stats[jugadorId]!['favor'] = stats[jugadorId]!['favor']! + 1;
+          playerStat['favor'] = (playerStat['favor'] as int) + 1;
         } else {
-          stats[jugadorId]!['contra'] = stats[jugadorId]!['contra']! + 1;
+          playerStat['contra'] = (playerStat['contra'] as int) + 1;
+        }
+
+        // Registrar jugador clave para este jugador
+        final claveId = situacion.jugadorClaveId;
+        if (claveId != null && claveId.isNotEmpty) {
+          final Map<String, int> jugadoresClave = playerStat['jugadoresClaveFrecuentes'] as Map<String, int>;
+          jugadoresClave[claveId] = (jugadoresClave[claveId] ?? 0) + 1;
+        }
+
+        // Registrar accion clave para este jugador
+        final accionId = situacion.tipoAccionClave;
+        if (accionId != null && accionId.isNotEmpty) {
+          final Map<String, int> accionesClave = playerStat['accionesClaveFrecuentes'] as Map<String, int>;
+          accionesClave[accionId] = (accionesClave[accionId] ?? 0) + 1;
         }
       }
+    }
+
+    // Ahora determinar jugadorClave y accionClave más frecuentes para cada jugador
+    for (var entry in stats.entries) {
+      final playerStat = entry.value;
+      final Map<String, int> jugClaveFreq = playerStat['jugadoresClaveFrecuentes'] ?? {};
+      final Map<String, int> accClaveFreq = playerStat['accionesClaveFrecuentes'] ?? {};
+
+      String? jugadorClaveId;
+      String? accionClaveId;
+
+      if (jugClaveFreq.isNotEmpty) {
+        jugadorClaveId = jugClaveFreq.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+      }
+
+      if (accClaveFreq.isNotEmpty) {
+        accionClaveId = accClaveFreq.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+      }
+
+      playerStat['jugadorClave'] = jugadorClaveId;
+      playerStat['accionClave'] = accionClaveId;
+
+      // Limpiar maps de frecuencias para no enviar a la UI
+      playerStat.remove('jugadoresClaveFrecuentes');
+      playerStat.remove('accionesClaveFrecuentes');
     }
 
     return stats;
@@ -111,7 +184,7 @@ class AppData extends ChangeNotifier {
     return stats;
   }
 
-  // ✅ NUEVO: Totales reales (llegadas únicas, no duplicadas por jugador)
+  // Totales reales (llegadas únicas, no duplicadas por jugador)
   Map<String, int> getTotalesReales() {
     final int favor = _situacionesRegistradas.where((s) => s.esAFavor).length;
     final int contra = _situacionesRegistradas.where((s) => !s.esAFavor).length;
@@ -121,5 +194,21 @@ class AppData extends ChangeNotifier {
       'contra': contra,
       'total': total,
     };
+  }
+
+  // Nuevo: devuelve el nombre del jugador por id o null si no existe
+  String? getNombreJugadorPorId(String? id) {
+    if (id == null) return null;
+    try {
+      return _jugadoresDisponibles.firstWhere((j) => j.id == id).nombre;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Nuevo: devuelve el nombre de la acción clave por id o null si no existe
+  String? getNombreAccionClave(String? id) {
+    if (id == null) return null;
+    return _accionesClaveMap[id];
   }
 }
