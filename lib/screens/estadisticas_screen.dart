@@ -63,7 +63,7 @@ class TabEstadisticasJugadores extends StatelessWidget {
 }
 
 class TablaJugadoresWidget extends StatelessWidget {
-  final Map<String, Map<String, int>> stats;
+  final Map<String, Map<String, dynamic>> stats; // ahora dinámico para incluir jugadorClave y accionClave
   final List<Jugador> jugadores;
 
   const TablaJugadoresWidget({super.key, required this.stats, required this.jugadores});
@@ -85,7 +85,7 @@ class TablaJugadoresWidget extends StatelessWidget {
     final jugadoresConDatos = jugadores.where((jugador) {
       final playerStat = stats[jugador.id];
       return playerStat != null &&
-          (playerStat['favor']! > 0 || playerStat['contra']! > 0);
+          ((playerStat['favor'] ?? 0) > 0 || (playerStat['contra'] ?? 0) > 0);
     }).toList();
 
     if (jugadoresConDatos.isEmpty) {
@@ -126,13 +126,27 @@ class TablaJugadoresWidget extends StatelessWidget {
           rows: [
             ...jugadoresConDatos.map((jugador) {
               final playerStat = stats[jugador.id]!;
-              final favor = playerStat['favor']!;
-              final contra = playerStat['contra']!;
+              final favor = playerStat['favor'] ?? 0;
+              final contra = playerStat['contra'] ?? 0;
               final total = favor + contra;
               final balance = favor - contra;
 
-              final jugadorClave = playerStat['jugadorClave'] ?? 0;
-              final accionClave = playerStat['accionClave'] ?? 0;
+              // Obtenemos jugadorClave y accionClave (IDs)
+              final jugadorClaveId = playerStat['jugadorClave'] as String?;
+              final accionClaveId = playerStat['accionClave'] as String?;
+
+              // Buscar nombre del jugador clave
+              final jugadorClaveNombre = jugadorClaveId != null
+                  ? jugadores.firstWhere(
+                      (j) => j.id == jugadorClaveId,
+                      orElse: () => Jugador(id: '', nombre: '-'))
+                      .nombre
+                  : '-';
+
+              // Buscar nombre de la acción clave
+              final accionClaveNombre = accionClaveId != null
+                  ? appData.getNombreAccionClave(accionClaveId) ?? '-'
+                  : '-';
 
               return DataRow(cells: [
                 DataCell(Text(jugador.nombre)),
@@ -146,8 +160,8 @@ class TablaJugadoresWidget extends StatelessWidget {
                   ),
                 )),
                 DataCell(Text(total.toString(), style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(jugadorClave.toString())),
-                DataCell(Text(accionClave.toString())),
+                DataCell(Text(jugadorClaveNombre)),
+                DataCell(Text(accionClaveNombre)),
               ]);
             }).toList(),
             DataRow(
@@ -158,8 +172,8 @@ class TablaJugadoresWidget extends StatelessWidget {
                 DataCell(Text(totalContra.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red))),
                 const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
                 DataCell(Text(totalGeneral.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blue))),
-                const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                const DataCell(Text('-', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+                const DataCell(Text('-')),
+                const DataCell(Text('-')),
               ],
             ),
           ],
